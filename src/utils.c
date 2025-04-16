@@ -61,6 +61,12 @@ char	*get_command_path(char *cmd, char **env)
 	char	*bin;
 	int		i;
 
+	if (cmd[0] == '/')
+	{
+		if (access(cmd, F_OK) == 0)
+			return (ft_strdup(cmd));
+		return (NULL);
+	}
 	i = 0;
 	while (ft_strnstr(env[i], "PATH=", 5) == 0)
 		i++;
