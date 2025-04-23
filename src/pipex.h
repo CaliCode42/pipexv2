@@ -25,7 +25,8 @@
 typedef struct s_pipex_data
 {
 	int		pipe_fd[2];
-	pid_t	pid;
+	pid_t	pid1;
+	pid_t	pid2;
 	char	*cmd1;
 	char	*cmd2;
 	char	**envp;

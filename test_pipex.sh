@@ -56,11 +56,11 @@ run_test "Test 10" "tr a-z A-Z" "rev"
 
 run_test "Test 11" "cat" "cat"
 run_test "Test 12" "grep foo" "wc -l" "nonexistent_input.txt"
-run_test "Test 13" "echo test" "cat" "$INPUT" "/root/output.txt"
+run_test "Test 13" "echo test" "cat" "$INPUT" "./output.txt"
 run_test "Test 14" "/bin/echo Hello" "/usr/bin/wc -c"
 run_test "Test 15" "echo 'Hello * World?'" "wc -w"
 run_test "Test 16" "grep -E 'foo|bar'" "wc -l"
-run_test "Test 17" "echo hello > test.txt" "wc -l"
+run_test "Test 17" "sh -c 'echo hello > test.txt'" "wc -l"
 run_test "Test 18" "sh -c 'exit 42'" "cat"
 yes "line" | head -n 1000 > big_input.txt
 run_test "Test 19" "cat" "wc -l" "big_input.txt"

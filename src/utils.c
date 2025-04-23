@@ -12,11 +12,23 @@
 
 #include "pipex.h"
 
+void	error_exit(const char *msg, int exit_code)
+{
+	perror(msg);
+	exit(exit_code);
+}
+
 void	init_pipex_data(t_pipex_data *data, char **av, char **env)
 {
-	data->pid = 0;
+	data->pid1 = 0;
+	data->pid2 = 0;
 	data->cmd1 = av[2];
 	data->cmd2 = av[3];
+	if (data->cmd2 == NULL || data->cmd2[0] == '\0')
+	{
+		write(2, "pipex: empty command\n", 22);
+		exit(EXIT_FAILURE);
+	}
 	data->envp = env;
 	data->file1 = av[1];
 	data->file2 = av[4];
@@ -32,27 +44,23 @@ void	free_array(char **array)
 	free(array);
 }
 
-char	*ft_str_threejoin(char const *s1, char const *s2, char const *s3)
+char	*find_command(char *cmd, char **path)
 {
-	char	*str;
-	size_t	len1;
-	size_t	len2;
-	size_t	len3;
-	size_t	total_len;
+	char	*cmd_path;
+	int		i;
 
-	if (!s1 || !s2 || !s3)
-		return (NULL);
-	len1 = ft_strlen(s1);
-	len2 = ft_strlen(s2);
-	len3 = ft_strlen(s3);
-	total_len = len1 + len2 + len3 + 1;
-	str = (char *)malloc(sizeof(char) * total_len);
-	if (!str)
-		return (NULL);
-	ft_strlcpy(str, s1, total_len);
-	ft_strlcat(str, s2, total_len);
-	ft_strlcat(str, s3, total_len);
-	return (str);
+	i = 0;
+	while (path[i])
+	{
+		cmd_path = ft_str_threejoin(path[i], "/", cmd);
+		if (!cmd_path)
+			return (NULL);
+		if (access(cmd_path, F_OK) == 0)
+			return (cmd_path);
+		free(cmd_path);
+		i++;
+	}
+	return (NULL);
 }
 
 char	*get_command_path(char *cmd, char **env)
@@ -71,20 +79,11 @@ char	*get_command_path(char *cmd, char **env)
 	while (ft_strnstr(env[i], "PATH=", 5) == 0)
 		i++;
 	path = ft_split(env[i] + 5, ':');
-	i = 0;
-	while (path[i])
+	bin = find_command(cmd, path);
+	if (!bin)
 	{
-		bin = ft_str_threejoin(path[i], "/", cmd);
-		if (!bin)
-			return (NULL);
-		if (access(bin, F_OK) == 0)
-			return (bin);
-		free(bin);
-		i++;
+		free_array(path);
+		return (NULL);
 	}
-	i = -1;
-	while (path[++i])
-		free(path[i]);
-	free(path);
-	return (NULL);
+	return (bin);
 }
