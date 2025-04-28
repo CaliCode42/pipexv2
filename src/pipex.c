@@ -6,11 +6,25 @@
 /*   By: tcali <tcali@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/07 13:50:41 by tcali             #+#    #+#             */
-/*   Updated: 2025/04/23 14:39:37 by tcali            ###   ########.fr       */
+/*   Updated: 2025/04/28 12:54:49 by tcali            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
+
+void	split_cmd(char *command, char **env, char ***args, char **path)
+{
+	*args = ft_split(command, ' ');
+	if (!*args || !*args[0])
+		error_exit("invalid command", 1);
+	*path = get_command_path((*args)[0], env);
+	if (!*path)
+	{
+		ft_printf_fd(2, "%s : command not found\n", (*args)[0]);
+		free_array(*args);
+		exit(127);
+	}
+}
 
 void	execute_command(char *command, char **env)
 {
@@ -30,18 +44,7 @@ void	execute_command(char *command, char **env)
 		path = ft_strdup("/bin/sh");
 	}
 	else
-	{
-		args = ft_split(command, ' ');
-		if (!args || !args[0])
-			error_exit("invalid command", 1);
-		path = get_command_path(args[0], env);
-		if (!path)
-		{
-			ft_printf_fd(2, "%s : command not found\n", args[0]);
-			free_array(args);
-			exit(127);
-		}
-	}
+		split_cmd(command, env, &args, &path);
 	if (execve(path, args, env) == -1)
 	{
 		if (path != args[0])
@@ -51,25 +54,23 @@ void	execute_command(char *command, char **env)
 	}
 }
 
-void	child1(int pipe_fd[2], t_pipex_data *data)
+void	child(int pipe_fd[2], t_pipex_data *data, int is_first)
 {
 	int	fd;
 
-	fd = open(data->file1, O_RDONLY, 0644);
-	if (fd < 0)
-		error_exit("no such file or directory", 1);
-	dup2(pipe_fd[1], STDOUT_FILENO);
-	dup2(fd, STDIN_FILENO);
-	close(pipe_fd[0]);
-	close(pipe_fd[1]);
-	close(fd);
-	execute_command(data->cmd1, data->envp);
-}
-
-void	child2(int pipe_fd[2], t_pipex_data *data)
-{
-	int	fd;
-
+	if (is_first == 1)
+	{
+		fd = open(data->file1, O_RDONLY, 0644);
+		if (fd < 0)
+			error_exit("no such file or directory", 1);
+		dup2(pipe_fd[1], STDOUT_FILENO);
+		dup2(fd, STDIN_FILENO);
+		close(pipe_fd[0]);
+		close(pipe_fd[1]);
+		close(fd);
+		execute_command(data->cmd1, data->envp);
+		return ;
+	}
 	fd = open(data->file2, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd < 0)
 		error_exit("permission denied", 1);
@@ -102,12 +103,12 @@ int	main(int ac, char **av, char **envp)
 	if (data.pid1 < 0)
 		error_exit("failed to fork first process", 1);
 	if (data.pid1 == 0)
-		child1(data.pipe_fd, &data);
+		child(data.pipe_fd, &data, 1);
 	data.pid2 = fork();
 	if (data.pid2 < 0)
 		error_exit("failed to fork second process", 1);
 	if (data.pid2 == 0)
-		child2(data.pipe_fd, &data);
+		child(data.pipe_fd, &data, 2);
 	parent(data.pipe_fd, &data);
 	return (0);
 }

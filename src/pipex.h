@@ -39,7 +39,7 @@ void	error_exit(const char *msg, int exit_code);
 
 // Process handling
 void	execute_command(char *cmd, char **env);
-void	child(int pipe_fd[2], t_pipex_data *data);
+void	child(int pipe_fd[2], t_pipex_data *data, int is_first);
 void	parent(int pipe_fd[2], t_pipex_data *data);
 
 // Utility functions
