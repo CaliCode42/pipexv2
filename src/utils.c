@@ -14,7 +14,8 @@
 
 void	error_exit(const char *msg, int exit_code)
 {
-	perror(msg);
+	if (errno != 0)
+		perror(msg);
 	exit(exit_code);
 }
 

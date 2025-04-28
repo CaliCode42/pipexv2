@@ -6,7 +6,7 @@
 /*   By: tcali <tcali@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/07 13:50:41 by tcali             #+#    #+#             */
-/*   Updated: 2025/04/28 12:54:49 by tcali            ###   ########.fr       */
+/*   Updated: 2025/04/28 16:02:22 by tcali            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,10 @@ void	split_cmd(char *command, char **env, char ***args, char **path)
 {
 	*args = ft_split(command, ' ');
 	if (!*args || !*args[0])
-		error_exit("invalid command", 1);
+	{
+		free_array(*args);
+		error_exit("command not found\n", 127);
+	}
 	*path = get_command_path((*args)[0], env);
 	if (!*path)
 	{
@@ -84,10 +87,13 @@ void	child(int pipe_fd[2], t_pipex_data *data, int is_first)
 
 void	parent(int pipe_fd[2], t_pipex_data *data)
 {
+	int	status;
+
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
 	waitpid(data->pid1, NULL, 0);
-	waitpid(data->pid2, NULL, 0);
+	waitpid(data->pid2, &status, 0);
+	data->exit_code = (status >> 8);
 }
 
 int	main(int ac, char **av, char **envp)
@@ -110,5 +116,5 @@ int	main(int ac, char **av, char **envp)
 	if (data.pid2 == 0)
 		child(data.pipe_fd, &data, 2);
 	parent(data.pipe_fd, &data);
-	return (0);
+	return (data.exit_code);
 }

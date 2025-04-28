@@ -32,6 +32,7 @@ typedef struct s_pipex_data
 	char	**envp;
 	char	*file1;
 	char	*file2;
+	int		exit_code;
 }		t_pipex_data;
 
 // Error handling
